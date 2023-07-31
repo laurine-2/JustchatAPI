@@ -1,5 +1,7 @@
+using JustChatAPI.Data;
 using JustChatAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
@@ -33,6 +35,10 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Votre API JustChat", Version = "v1" });
 });
 
+// Connexion à la base de données PostgreSQL
+string connectionString = builder.Configuration.GetConnectionString("PostgresConnection");
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -45,9 +51,29 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+private void DeleteExpiredMessages()
+{
+    var expiredMessages = _dbContext.Messages.Where(m => m.ExpirationDate < DateTime.UtcNow).ToList();
+    _dbContext.Messages.RemoveRange(expiredMessages);
+    _dbContext.SaveChanges();
+}
+
+
+var app = builder.Build();
+var interval = TimeSpan.FromDays(1); 
+
+Task.Run(async () =>
+{
+    while (true)
+    {
+        DeleteExpiredMessages();
+        await Task.Delay(interval);
+    }
+});
+
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); // Ajoutez cette ligne pour activer l'authentification
+app.UseAuthentication(); 
 
 app.UseAuthorization();
 

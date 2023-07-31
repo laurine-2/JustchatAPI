@@ -1,4 +1,5 @@
-﻿using JustChatAPI.Services;
+﻿using JustChatAPI.Data;
+using JustChatAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JustChatAPI.Controllers
@@ -14,8 +15,12 @@ namespace JustChatAPI.Controllers
             _adService = adService;
         }
 
+        public ActiveDirectoryController(AppDbContext _dbContext)
+        {
+            _dbContext = _dbContext;
+        }
         [HttpPost("create")]
-        public IActionResult CreateUser([FromBody] Models.User user )
+        public IActionResult CreateUser([FromBody] Models.User user)
         {
             _adService.CreateUser(user.Username, user.Password);
             return Ok("utilisateur crée avec success");
@@ -23,9 +28,9 @@ namespace JustChatAPI.Controllers
         }
 
         [HttpPost("connect")]
-        public IActionResult AuthenficateUser([FromBody] Models.User user )
+        public IActionResult AuthenficateUser([FromBody] Models.User user)
         {
-            bool isAuthenficated=_adService.AuthentificateUser(user.Username, user.Password);
+            bool isAuthenficated = _adService.AuthentificateUser(user.Username, user.Password);
             if (isAuthenficated)
             {
                 return Ok("Authentification Successfull completed");
@@ -39,8 +44,8 @@ namespace JustChatAPI.Controllers
         [HttpGet("contacts")]
         public IActionResult getContacts()
         {
-            List<string> contacts= _adService.getContacts();
-            if(contacts.Count==0) 
+            List<string> contacts = _adService.getContacts();
+            if (contacts.Count == 0)
             {
                 return NotFound("Aucun contact pour cette unite organisationelle");
             }
